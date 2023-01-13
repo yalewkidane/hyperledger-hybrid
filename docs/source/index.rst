@@ -8,13 +8,13 @@
 	  You can change it using selector at the bottom of that
 	  navigation panel.
      
-Hyperledger-Hybrid
-==================
+GS1 Based Enterprise Hyperledger
+=================================
 
 .. |License| image:: https://img.shields.io/github/license/yalewkidane/FIWARE_EPCIS_Mediation_Gateway.svg
 .. _License: https://opensource.org/licenses/Apache-2.0
 
-.. image:: images/hyperledger-hybrid.png
+.. image:: images/hyperledger-hybrid_2.png
 
 Enterprise grade permissioned distributed ledger platform that impliments GS1 standards
 
