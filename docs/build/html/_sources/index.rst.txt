@@ -23,6 +23,8 @@ Enterprise grade permissioned distributed ledger platform that impliments GS1 st
 
    whatis
    whatsnew
+   architecture
+   getting_started
 
 
 
