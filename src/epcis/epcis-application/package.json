@@ -14,6 +14,8 @@
         "lint": "eslint *.js"
     },
     "dependencies": {
+        "ajv": "^8.12.0",
+        "ajv-formats": "^2.1.1",
         "axios": "^0.21.1",
         "bcrypt": "^5.1.0",
         "dotenv": "^16.0.3",
@@ -23,6 +25,9 @@
         "jsonwebtoken": "^9.0.0",
         "nano": "^10.1.2",
         "node-couchdb": "^2.0.0",
+        "node-cron": "^3.0.2",
+        "request": "^2.88.2",
+        "uuid": "^9.0.0",
         "ws": "^8.13.0"
     },
     "devDependencies": {

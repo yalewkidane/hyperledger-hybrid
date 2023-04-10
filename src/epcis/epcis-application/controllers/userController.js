@@ -76,7 +76,10 @@ exports.userLogin = async (req, res) => {
     if (stat === "waiting") { return res.status(401).json({ error: 'Invalid credentials, Approval is waiting' }); }
 
     if (stat === "approved") {
-      const token = jwt.sign({ userId: username }, process.env.SECRET);
+      // Set expiration time to 1 month from now
+      const expirationTime = Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 30);
+
+      const token = jwt.sign({ userId: username }, process.env.SECRET, { expiresIn: expirationTime });
       return res.status(401).json({ token });
     }
 

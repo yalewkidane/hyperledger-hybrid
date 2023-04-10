@@ -7,7 +7,7 @@ const FabricCAServices = require('fabric-ca-client');
 const path = require('path');
 const { buildCAClient, registerAndEnrollUser, enrollAdmin } = require('../../../../test-application/javascript/CAUtil.js');
 const { buildCCPOrg1, buildWallet } = require('../../../../test-application/javascript/AppUtil');
-
+const EventStrategies = require('fabric-network/lib/impl/event/defaulteventhandlerstrategies');
 const channelName = 'mychannel';
 const chaincodeName = 'ledger';
 const mspOrg1 = 'Org1MSP';
@@ -15,7 +15,10 @@ const mspOrg1 = 'Org1MSP';
 const walletPath = path.join(__dirname, 'wallet');
 const userId = 'appUser';
 
-
+const RED = '\x1b[31m\n';
+const GREEN = '\x1b[32m\n';
+const BLUE = '\x1b[34m';
+const RESET = '\x1b[0m';
 
 async function connectToContract() {
 
@@ -50,6 +53,7 @@ async function connectToContract() {
         wallet,
         identity: userId,
         discovery: { enabled: true, asLocalhost: true } // using asLocalhost as this gateway is using a fabric network deployed locally
+        //eventHandlerOptions: EventStrategies.NONE
     });
 
     // Build a network instance based on the channel where the smart contract is deployed
@@ -57,6 +61,36 @@ async function connectToContract() {
 
     // Get the contract from the network.
     const contract = network.getContract(chaincodeName);
+   /*
+    console.log(`${GREEN}<-- Query results from `);
+    const listner = await contract.addContractListener('my-contract-listener', 'event', (err, event, blockNumber, transactionId, status) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+  
+        //convert event to something we can parse 
+        event = event.payload.toString();
+        event = JSON.parse(event)
+  
+        //where we output the TradeEvent
+        console.log('************************ Start Trade Event *******************************************************');
+        console.log(`type: ${event.type}`);
+        console.log(`ownerId: ${event.ownerId}`);
+        console.log(`id: ${event.id}`);
+        console.log(`description: ${event.description}`);
+        console.log(`status: ${event.status}`);
+        console.log(`amount: ${event.amount}`);
+        console.log(`buyerId: ${event.buyerId}`);
+        console.log(`Block Number: ${blockNumber} Transaction ID: ${transactionId} Status: ${status}`);
+        console.log('************************ End Trade Event ************************************');
+      });
+      
+    console.log(`listner`,  listner);
+
+
+    */
+
 
     return [contract, gateway];
 
@@ -64,4 +98,9 @@ async function connectToContract() {
 
 
 
-module.exports = {connectToContract};
+//module.exports = {connectToContract};
+
+exports.getcontractGateway=async()=>{
+    return await connectToContract();
+}
+

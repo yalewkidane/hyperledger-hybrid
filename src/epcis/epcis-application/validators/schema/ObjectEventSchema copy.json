@@ -1,0 +1,110 @@
+{
+    "@context": {
+        "anyOf": [
+            {
+                "type": "string",
+                "format": "uri"
+            },
+            {
+                "type": "object"
+            },
+            {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        {
+                            "type": "object"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "eventTime": {
+        "type": "string",
+        "format": "date-time"
+    },
+    "recordTime": {
+        "type": "string",
+        "format": "date-time"
+    },
+    "eventTimeZoneOffset": {
+        "type": "string",
+        "pattern": "^([+]|[-])((0[0-9]|1[0-3]):([0-5][0-9])|14:00)$"
+    },
+    "eventID": {
+        "type": "string",
+        "format": "uri"
+    },
+    "certificationInfo": {
+        "anyOf": [
+            {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "format": "uri"
+                }
+            },
+            {
+                "type": "string",
+                "format": "uri"
+            }
+        ]
+    },
+    "errorDeclaration": {
+        "type": "object",
+        "properties": {
+            "declarationTime": {
+                "type": "string",
+                "format": "date-time"
+            },
+            "reason": {
+                "anyOf": [
+                    {
+                        "type": "string",
+                        "format": "uri",
+                        "pattern": "^(?!(urn:epcglobal:cbv|https?:\\/\\/ns\\.gs1\\.org/cbv\\/))"
+                    },
+                    {
+                        "type": "string",
+                        "enum": [
+                            "did_not_occur",
+                            "incorrect_data"
+                        ]
+                    }
+                ]
+            },
+            "correctiveEventIDs": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "format": "uri"
+                }
+            }
+        },
+        "required": [
+            "declarationTime"
+        ],
+        "propertyNames": {
+            "anyOf": [
+                {
+                    "type": "string",
+                    "format": "uri"
+                },
+                {
+                    "type": "string",
+                    "enum": [
+                        "declarationTime",
+                        "reason",
+                        "correctiveEventIDs"
+                    ]
+                }
+            ]
+        }
+    }
+}

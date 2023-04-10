@@ -74,6 +74,92 @@ const {Contract} = require('fabric-contract-api');
 class Chaincode extends Contract {
 
 	// CreateAsset - create a new asset, store into chaincode state
+	async CaptureEvent(ctx, eventString) {
+		//console.log(eventJSON)
+		const event = JSON.parse(eventString);
+		const exists = await this.AssetExists(ctx, event.eventID);
+		if (exists) {
+			throw new Error(`The asset ${event.eventID} already exists`);
+		}
+
+		// ==== Create asset object and marshal to JSON ====
+		//ctx.stub.setEvent("event", Buffer.from(JSON.stringify(event)));
+
+		// === Save asset to state ===
+		 await ctx.stub.putState(event.eventID, Buffer.from(JSON.stringify(event)));
+		 return ctx.stub.setEvent("event", Buffer.from(JSON.stringify(event)));
+	}
+
+	async QueryEPCIS(ctx, queryString) {
+		return await this.GetQueryResultForQueryString(ctx, queryString); //shim.success(queryResults);
+	}
+
+	async QueryEPCISWithPagination(ctx, queryString, pageSize, bookmark) {
+
+		const {iterator, metadata} = await ctx.stub.getQueryResultWithPagination(queryString, pageSize, bookmark);
+		let results = {};
+
+		results.results = await this._GetAllResults(iterator, false);
+
+		results.fetchedRecordsCount = metadata.fetchedRecordsCount;
+
+		results.bookmark = metadata.bookmark;
+
+		return JSON.stringify(results);s
+	}
+
+
+	// Check if vocabulary with exists
+	async VocExists(ctx, queryString) {
+		let VocState =  await this.GetQueryResultForQueryString(ctx, queryString);
+		return VocState;
+		//return VocState.length > 0;
+	}
+
+	// CreateAsset - create a new asset, store into chaincode state
+	async CaptureVocabulary(ctx, VocString) {
+		const vocabulary = JSON.parse(VocString);
+		let queryString = {};
+		queryString.selector = {};
+		queryString.selector.docType = vocabulary.docType ;
+		queryString.selector.voc = vocabulary.voc;
+		let exists = await this.VocExists(ctx, JSON.stringify(queryString));
+		exists = JSON.parse(exists);
+		if(!(exists.length >0)){
+			return await ctx.stub.putState(vocabulary.ID, Buffer.from(VocString));
+		}else{
+			return 0;
+		}
+	}
+
+	// CaptureQueriesData - create queries
+	async CaptureQueriesData(ctx, queriesString) {
+		let queries = JSON.parse(queriesString);
+		return await ctx.stub.putState(queries.name, Buffer.from(queriesString))
+	}
+
+	// CaptureQueriesData - create queries
+	async CaptureSubscription(ctx, subscriptionString) {
+		let subscription = JSON.parse(subscriptionString);
+		return await ctx.stub.putState(subscription.subscriptionID, Buffer.from(subscriptionString))
+	}
+
+	// CaptureMasterData - create or update masterdata store into chaincode state
+	async CaptureMasterData(ctx, vocElementString) {
+		let vocElement = JSON.parse(vocElementString);
+		vocElement.docType='masterData';
+		vocElement.updatedTime = new Date().toISOString();
+		return await ctx.stub.putState(vocElement.id, Buffer.from(JSON.stringify(vocElement)))
+	}
+
+	async DeleteQueriesSubscription(ctx, id){
+		return await ctx.stub.deleteState(id); //remove the asset from chaincode stat
+	}
+
+	
+
+
+	// CreateAsset - create a new asset, store into chaincode state
 	async CreateAsset(ctx, assetID, color, size, owner, appraisedValue) {
 		const exists = await this.AssetExists(ctx, assetID);
 		if (exists) {

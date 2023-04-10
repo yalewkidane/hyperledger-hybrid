@@ -138,7 +138,36 @@ async function main() {
 			}
 
 			let result;
+
+
+
+			const Contractlistner = await contract.addContractListener('my-contract-listener', 'event', (err, event, blockNumber, transactionId, status) => {
+				if (err) {
+				  console.error(err);
+				  return;
+				}
+		  
+				//convert event to something we can parse 
+				event = event.payload.toString();
+				event = JSON.parse(event)
+		  
+				//where we output the TradeEvent
+				console.log('************************ Start Trade Event *******************************************************');
+				console.log(`type: ${event.type}`);
+				console.log(`ownerId: ${event.ownerId}`);
+				console.log(`id: ${event.id}`);
+				console.log(`description: ${event.description}`);
+				console.log(`status: ${event.status}`);
+				console.log(`amount: ${event.amount}`);
+				console.log(`buyerId: ${event.buyerId}`);
+				console.log(`Block Number: ${blockNumber} Transaction ID: ${transactionId} Status: ${status}`);
+				console.log('************************ End Trade Event ************************************');
+			  });
+			  
+			console.log(`Contractlistner`,  Contractlistner);
 			
+/*
+
 
 			// Let's try a query operation (function).
 			// This will be sent to just one peer and the results will be shown.
@@ -157,7 +186,23 @@ async function main() {
 			console.log('\n--> Evaluate Transaction: GetAssetsByRange, function use an open start and fixed end (asset3) range to return assest1 to asset2');
 			result = await contract.evaluateTransaction('GetAssetsByRange', '', 'asset3');
 			console.log(`*** Result: ${prettyJSONString(result.toString())}`);
+*/
+			let sampleEvent={}
+			sampleEvent.eventID="http/1234564545345344656"
+			sampleEvent.test="http/test value"
+			const args = JSON.stringify(sampleEvent);
+        	console.log("args : ", args)
 
+
+        //CaptureEvent
+        console.log('\n--> Submit Transaction: capture single event');
+        const response = await contract.submitTransaction('CaptureEvent', args);
+        console.log('*** Result: committed');
+
+			console.log('\n--> Evaluate Transaction: GetAssetsByRange, function use an open start and fixed end (asset3) range to return assest1 to asset2');
+			result = await contract.evaluateTransaction('GetAssetsByRange', '', 'asset3');
+			console.log(`*** Result: ${prettyJSONString(result.toString())}`);
+/*
 			// Now let's try to submit a transaction.
 			// This will be sent to both peers and if both peers endorse the transaction, the endorsed proposal will be sent
 			// to the orderer to be committed by each of the peer's to the channel ledger.
@@ -173,6 +218,7 @@ async function main() {
 			result = await contract.evaluateTransaction('AssetExists', 'asset7');
 			console.log(`*** Result: ${prettyJSONString(result.toString())}`);
 
+			
 			// Now let's try to submit a transaction that deletes an asset
 			// This will be sent to both peers and if both peers endorse the transaction, the endorsed proposal will be sent
 			// to the orderer to be committed by each of the peer's to the channel ledger.
@@ -236,7 +282,7 @@ async function main() {
 			console.log('\n--> Evaluate Transaction: GetAssetsByRangeWithPagination - get page 2 of assets from asset2 to asset6 (asset4, asset5)');
 			result = await contract.evaluateTransaction('GetAssetsByRangeWithPagination', 'asset2', 'asset6', '2', 'asset4');
 			console.log(`*** Result: ${prettyJSONString(result.toString())}`);
-
+*/
 			console.log('*** all tests completed');
 		} finally {
 			// Disconnect from the gateway when the application is closing

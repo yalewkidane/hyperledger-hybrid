@@ -1,49 +1,43 @@
 const express = require('express');
-
-
+//const mongoose = require("mongoose")
+//const conn_utils = require("./utils/connectionUtils.js")
 const responseUtils = require("./utils/responseUtils");
 const jwt = require('jsonwebtoken');
 
 //To call all configuration files 
 require('dotenv').config({ path: "./config/.env" })
 
-const websocketController = require("./controllers/subscriptionWebsocketController");
+const userdb=require('./utils/userDBInit')
 
-var express_app = express();
 
+
+//const websocketController = require("./controllers/subscriptionWebsocketController");
 const server = require('http').createServer(express_app);
 const WebSocket = require('ws');
 
 const wss = new WebSocket.Server({ server: server });//, path: "/queries/{{queryName}}/events"
 
+
+
+var express_app = express();
+
+
 const bcrypt = require('bcrypt');
+
 //const User = require('./models/User');
-const userdb=require('./utils/userDBInit')
-//const index_router = require("./routes/index.js");
-//const test_router = require("./routes/test.js");
-//const router = require("./routes/routes.js");
-const capture_router = require("./routes/capture.js");
-//const info_router = require("./routes/info.js");
+
 const event_router = require("./routes/event.js");
 const eventTypes_router = require("./routes/eventTypes.js");
-const epcs_router = require("./routes/epcs.js");
 const bizSteps_router = require("./routes/bizSteps.js");
 const bizLocations_router = require("./routes/bizLocations");
 const readPoints_router = require("./routes/readPoints");
 const dispositions_router = require("./routes/dispositions");
-const queries_router = require("./routes/queries");
-//const nextPageToken_router = require("./routes/nextPageToken");
-const vocabularies_router = require("./routes/vocabularies");
-
-
 
 const userController = require("./controllers/userController");
 
 let PORT = 8090;
 
-MONGODB_SERVER_URL = process.env.MONGODB_SERVER_URL
-MONGODB_SERVER_PORT = process.env.MONGODB_SERVER_PORT
-MONGODB_EPCIS_COLLECTION = process.env.MONGODB_EPCIS_COLLECTION
+
 
 
 
@@ -87,8 +81,6 @@ initUserDB();
 
 
 
-
-
 //express_app.use(verifyToken);
 express_app.use((req, res, next) => {
   if (tokenFreePath(req.path)) {
@@ -102,25 +94,32 @@ express_app.use(express.json());
 //express_app.use("/test", test_router);
 
 ROOT_END_POINT = process.env.ROOT_END_POINT
-express_app.use(ROOT_END_POINT, capture_router);
-//express_app.use(ROOT_END_POINT, info_router);
 express_app.use(ROOT_END_POINT, event_router);
 express_app.use(ROOT_END_POINT, eventTypes_router);
-express_app.use(ROOT_END_POINT, epcs_router);
 express_app.use(ROOT_END_POINT, bizSteps_router);
 express_app.use(ROOT_END_POINT, bizLocations_router);
 express_app.use(ROOT_END_POINT, readPoints_router);
 express_app.use(ROOT_END_POINT, dispositions_router);
+const epcs_router = require("./routes/epcs.js");
+express_app.use(ROOT_END_POINT, epcs_router);
+
+/*
+express_app.use(ROOT_END_POINT, capture_router);
+express_app.use(ROOT_END_POINT, info_router);
+
+
+
+express_app.use(ROOT_END_POINT, dispositions_router);
 express_app.use(ROOT_END_POINT, queries_router);
-//express_app.use(ROOT_END_POINT, nextPageToken_router);
+express_app.use(ROOT_END_POINT, nextPageToken_router);
 express_app.use(ROOT_END_POINT, vocabularies_router);
 
 
+*/
 
-
-//exports.getWebscoket=()=>{
-//  return wss;
-//}
+exports.getWebscoket=()=>{
+  return wss;
+}
 
 
 
@@ -140,6 +139,9 @@ express_app.post('/delete', (req, res) => { return userController.userDelete(req
 
 
 
+express_app.get('/hello', (req, res) => {
+  res.send('Hello World!')
+})
 
 // Route that requires authentication
 express_app.get('/protected', verifyToken, (req, res) => {
@@ -150,10 +152,12 @@ express_app.get('/protected', verifyToken, (req, res) => {
 //express_app.use("/", index_router);
 express_app.disable('x-powered-by');
 
+
 wss.on('connection', function connection(ws, request) {
   websocketController.getWebscoket(wss);
   websocketController.handleWebSocketRequest(ws, request);
 });
+
 
 server.listen(PORT, () => {
   console.log("EPCIS Server Started");
@@ -165,6 +169,7 @@ server.listen(PORT, () => {
 
 
 function tokenFreePath(path) {
+  if ((path === '/hello')) {return true;}
   if ((path === '/login')) {return true;}
   if ((path === '/register')) {return true;}
   if ((path === '/users')) {return true;}
