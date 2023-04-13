@@ -17,6 +17,9 @@ var request = require('request');
 const { v4: uuidv4 } = require('uuid');
 var cron = require('node-cron');
 
+
+const mingo = require('mingo');
+
 var _this = this;
 
 const { getContract } = require('../utils/networkContractUtil.js');
@@ -28,7 +31,7 @@ evaluateContract();
 
 
 
-exports.getQueryWithQueryName= async(queryName) =>{
+exports.getQueryWithQueryName = async (queryName) => {
   if (typeof contract == 'undefined') {
     await evaluateContract();
   }
@@ -43,7 +46,7 @@ exports.getQueryWithQueryName= async(queryName) =>{
   return resultTransction;
 }
 
-exports.getSubscriptionWithSubscriptionID= async(subscriptionID) =>{
+exports.getSubscriptionWithSubscriptionID = async (subscriptionID) => {
   if (typeof contract == 'undefined') {
     await evaluateContract();
   }
@@ -57,6 +60,8 @@ exports.getSubscriptionWithSubscriptionID= async(subscriptionID) =>{
   resultTransction = JSON.parse(resultTransction);
   return resultTransction;
 }
+
+
 
 //Get /queries/:queryName/subscriptions
 exports.queryNameSubscriptionsGet = async (req, res) => {
@@ -362,10 +367,137 @@ exports.queryNameSubscriptionsWithIdDelete = async (req, res) => {
   }
 };
 
-
-
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 exports.onStreamSubscription = async (dataElement) => {
+  while (true) {
+    if (typeof contract == 'undefined') { await evaluateContract(); }
+    if (typeof contract !== 'undefined') { break; }
+    await sleep(1000); // Sleep for 1 second
+  }
+  //console.log("dataElement   :  ", dataElement)
+  let collection = [];
+  collection.push(dataElement);
+  var queryString = {};
+  queryString.docType = 'subscription';
+  queryString.stream = true;
+  let mangoQueryString = {};
+  mangoQueryString.selector = queryString;
+  mangoQueryString = JSON.stringify(mangoQueryString);
+  let resultTransction = await contract.evaluateTransaction('QueryEPCIS', mangoQueryString);
+  resultTransction = JSON.parse(resultTransction);
+  //console.log("resultTransction   :  ", resultTransction)
+  if (resultTransction.length > 0) {
+    let subscriptions = []
+    for (const ind in resultTransction) {
+      subscriptions.push(resultTransction[ind].Record);
+    }
+    while (subscriptions.length > 0) {
+      const queryName = resultTransction[0].Record.queryName;
+      let queryResult = await _this.getQueryWithQueryName(queryName)
+      //console.log("queryResult.query   :  ", queryResult[0].Record.query)
+      const queryString = await queryUtils.builedQueryString(queryResult[0].Record.query)
+      //console.log("queryString   :  ", queryString)
+      let cursor = mingo.find(collection, queryString)
+      let events = [];
+      for (let value of cursor) {
+        events.push(value);
+      }
+      //console.log("events : ", events);
+      if (events.length > 0) {
+        for (let ii = 0; ii < subscriptions.length; ii++) {
+          if (subscriptions[ii].queryName === queryName) {
+            if (typeof subscriptions[ii].dest !== 'undefined') {
+              console.log("surving subscription with id: ", subscriptions[ii].subscriptionID);
+              sendSubscriptionWebHook(subscriptions[ii], events);
+            } else {
+              //ws implimentation
+              console.log("surving subscription with id: ", subscriptions[ii].subscriptionID);
+              WebsocketController.sendStreamWebsocket(subscriptions[ii].subscriptionID, events)
+            }
+            subscriptions = subscriptions.filter(function (el) { return el.subscriptionID != subscriptions[ii].subscriptionID; });
+          }
+        }
+      } else if (events.length == 0) {
+        for (let ii = 0; ii < subscriptions.length; ii++) {
+          if (subscriptions[ii].queryName === queryName) {
+            if (subscriptions[ii].reportIfEmpty) {
+              if (typeof subscriptions[ii].dest !== 'undefined') {
+                console.log("surving empty subscription with id: ", subscriptions[ii].subscriptionID);
+                sendSubscriptionWebHook(subscriptions[ii], events);
+              } else {
+                //ws implimentation
+                console.log("surving subscription with id: ", subscriptions[ii].subscriptionID);
+                WebsocketController.sendStreamWebsocket(subscriptions[ii].subscriptionID, events)
+              }
+            }
+            subscriptions = subscriptions.filter(function (el) { return el.subscriptionID != subscriptions[ii].subscriptionID; });
+          }
+        }
+      }
+
+    }
+
+
+  }
+
+
+  return;
+  var subscriptions = await subscriptionModel.find({ stream: true });
+  //console.log("subscriptions--",subscriptions);
+  if (subscriptions.length > 0) {
+    await eventsInMemoryModel.insertMany(dataElement);
+    while (subscriptions.length > 0) {
+      const queryName = subscriptions[0].queryName;
+      const queries = await queriesModel.find({ name: queryName });
+      //console.log(queries);
+      const queryString = await queryUtils.builedQueryString(queries[0].query)
+      //console.log("queryString : ", queryString)
+      const events = await eventsInMemoryModel.find(queryString);
+      var subscription_indexs = [];
+      if (events.length > 0) {
+        for (let ii = 0; ii < subscriptions.length; ii++) {
+          if (subscriptions[ii].queryName === queryName) {
+            if (typeof subscriptions[ii].dest !== 'undefined') {
+              console.log("surving subscription with id: ", subscriptions[ii].subscriptionID);
+              sendSubscriptionWebHook(subscriptions[ii], events);
+            } else {
+              //ws implimentation
+              console.log("surving subscription with id: ", subscriptions[ii].subscriptionID);
+              WebsocketController.sendStreamWebsocket(subscriptions[ii].subscriptionID, events)
+            }
+            subscriptions = subscriptions.filter(function (el) { return el.subscriptionID != subscriptions[ii].subscriptionID; });
+          }
+        }
+      } else if (events.length == 0) {
+        for (let ii = 0; ii < subscriptions.length; ii++) {
+          if (subscriptions[ii].queryName === queryName) {
+            if (subscriptions[ii].reportIfEmpty) {
+              if (typeof subscriptions[ii].dest !== 'undefined') {
+                console.log("surving empty subscription with id: ", subscriptions[ii].subscriptionID);
+                sendSubscriptionWebHook(subscriptions[ii], events);
+              } else {
+                //ws implimentation
+                console.log("surving subscription with id: ", subscriptions[ii].subscriptionID);
+                WebsocketController.sendStreamWebsocket(subscriptions[ii].subscriptionID, events)
+              }
+            }
+            subscriptions = subscriptions.filter(function (el) { return el.subscriptionID != subscriptions[ii].subscriptionID; });
+          }
+        }
+      }
+
+    }
+    await eventsInMemoryModel.deleteMany({});
+  }
+
+
+}
+
+
+exports.onStreamSubscription_original = async (dataElement) => {
 
   var subscriptions = await subscriptionModel.find({ stream: true });
   //console.log("subscriptions--",subscriptions);

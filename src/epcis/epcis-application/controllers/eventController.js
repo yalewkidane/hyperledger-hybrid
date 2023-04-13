@@ -8,7 +8,10 @@ const queryConfig = require("../config/queryConfig")
 const cash = require('../utils/cacheVariables');
 const subscriptionController = require("../controllers/subscriptionsController");
 
-
+const RED = '\x1b[31m\n';
+const GREEN = '\x1b[32m\n';
+const BLUE = '\x1b[34m';
+const RESET = '\x1b[0m';
 //const responseObj = require("../models/response.js");
 
 validator = require("../validators/epcisValidator.js")
@@ -17,11 +20,29 @@ queryValidator = require("../validators/queryValidator")
 const { v4: uuidv4 } = require('uuid');
 
 const { getContract } = require('../utils/networkContractUtil.js');
+const { async } = require("node-couchdb/dist/node-couchdb.js")
 
 let contract;
 let gateway;
-async function evaluateContract() { [contract, gateway] = await getContract(); }
+async function evaluateContract() { 
+    [contract, gateway] = await getContract();     
+}
 evaluateContract();
+
+
+async function addContractListenerLocal(){
+    if (typeof contract == 'undefined') {
+        await evaluateContract();
+    }
+    listener = async (event) => {
+        const asset = JSON.parse(event.payload.toString());
+        console.log(`${GREEN}<-- Contract Event Received: ${event.eventName} - ${JSON.stringify(asset)}${RESET}`);
+    };
+    // now start the client side event service and register the listener
+    console.log(`${GREEN}--> Start contract event stream to peer in Org1${RESET}`);
+    await contract.addContractListener(listener);
+}
+
 
 
 //const { connectToContract } = require('../networkContract.js');
@@ -95,10 +116,11 @@ exports.eventPost = async (req, res) => {
 
         if (typeof contract == 'undefined') {
             await evaluateContract();
+            //await addContractListenerLocal();
         }
         //Handling eventType
         if (typeof event.type !== 'undefined') {
-            console.log("cash.eventType : ", cash.eventType)
+            //console.log("cash.eventType : ", cash.eventType)
             if (!cash.eventType.includes(event.type)) {
                 var contextval = {}
                 const extntion = event.type.split(':');
@@ -175,14 +197,14 @@ exports.eventPost = async (req, res) => {
                 const response = await contract.submitTransaction('CaptureVocabulary', vocabString);
                 console.log('*** Result: committed', JSON.parse(response));
 
-                cash.bizStep.push(event.disposition);
+                cash.disposition.push(event.disposition);
 
             }
         }
 
         //Handling bizLocation 
         if (typeof event.bizLocation !== 'undefined') {
-            if (!cash.bizLocation.includes(event.bizLocation)) {
+            if (!cash.bizLocation.includes(event.bizLocation.id)) {
                 let vocab = {};
                 vocab.ID = uuidv4();
                 vocab.docType = 'bizLocation';
@@ -192,12 +214,12 @@ exports.eventPost = async (req, res) => {
                 const response = await contract.submitTransaction('CaptureVocabulary', vocabString);
                 console.log('*** Result: committed', JSON.parse(response));
                 //bizLocations.collection.updateOne({ bizLoc: event.bizLocation.id }, { $setOnInsert: { bizLoc: event.bizLocation.id } }, { upsert: true });
-                cash.bizLocation.push(event.bizLocation);
+                cash.bizLocation.push(event.bizLocation.id);
             }
         }
         //Handling readPoint   
         if (typeof event.readPoint !== 'undefined') {
-            if (!cash.readPoint.includes(event.readPoint)) {
+            if (!cash.readPoint.includes(event.readPoint.id)) {
                 let vocab = {};
                 vocab.ID = uuidv4();
                 vocab.docType = 'readPoint';
@@ -207,7 +229,7 @@ exports.eventPost = async (req, res) => {
                 const response = await contract.submitTransaction('CaptureVocabulary', vocabString);
                 console.log('*** Result: committed', JSON.parse(response));
                 //readPoints.collection.updateOne({ readPoint: event.readPoint.id }, { $setOnInsert: { readPoint: event.readPoint.id } }, { upsert: true });
-                cash.readPoint.push(event.readPoint);
+                cash.readPoint.push(event.readPoint.id);
             }
         }
 
@@ -237,7 +259,7 @@ exports.eventPost = async (req, res) => {
                 vocab.docType = 'epc';
                 vocab.voc = epcElement.EPC;
                 const vocabString = JSON.stringify(vocab);
-                console.log('\n--> Submit Transaction: capture vocabulary readPoint');
+                console.log('\n--> Submit Transaction: capture vocabulary EPC');
                 const response = await contract.submitTransaction('CaptureVocabulary', vocabString);
                 console.log('*** Result: committed', JSON.parse(response));
                 //epcs.collection.updateOne({ epc: epcElement.EPC }, { $setOnInsert: { epc: epcElement.EPC } }, { upsert: true })

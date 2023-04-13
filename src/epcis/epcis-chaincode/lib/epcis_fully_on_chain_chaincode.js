@@ -73,6 +73,7 @@ const {Contract} = require('fabric-contract-api');
 
 class Chaincode extends Contract {
 
+
 	// CreateAsset - create a new asset, store into chaincode state
 	async CaptureEvent(ctx, eventString) {
 		//console.log(eventJSON)
@@ -86,8 +87,9 @@ class Chaincode extends Contract {
 		//ctx.stub.setEvent("event", Buffer.from(JSON.stringify(event)));
 
 		// === Save asset to state ===
-		 await ctx.stub.putState(event.eventID, Buffer.from(JSON.stringify(event)));
-		 return ctx.stub.setEvent("event", Buffer.from(JSON.stringify(event)));
+		const result= await ctx.stub.putState(event.eventID, Buffer.from(JSON.stringify(event)));
+		await ctx.stub.setEvent("event", Buffer.from(JSON.stringify(event)));
+		return result;
 	}
 
 	async QueryEPCIS(ctx, queryString) {

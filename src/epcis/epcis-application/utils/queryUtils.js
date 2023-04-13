@@ -1141,17 +1141,20 @@ exports.getQueryResult = async (req, res) => {
 
         var sort = [{
             // Sort by field1 in ascending order
-            field1: "asc"
+            //eventTime: "asc"
+            //eventTime: "desc"
+            //recordTime: "desc"
         }]
+
         if (typeof req.query.orderBy !== 'undefined') {
             if (typeof req.query.orderDirection !== 'undefined') {
                 if (req.query.orderDirection === 'ASC') {
-                    sort[req.query.orderBy] = 1;
+                    sort[req.query.orderBy] = 'asc';
                 } else {
-                    sort[req.query.orderBy] = -1;
+                    sort[req.query.orderBy] = 'desc';
                 }
             } else {
-                sort[req.query.orderBy] = -1
+                sort[req.query.orderBy] = 'desc'
             }
         }
         //sort._id = -1;
@@ -1168,7 +1171,8 @@ exports.getQueryResult = async (req, res) => {
 
         let mangoQueryString = {};
         mangoQueryString.selector = queryString;
-        //mangoQueryString.sort = sort;
+        mangoQueryString.sort = sort;
+        //mangoQueryString.use_index = use_index;
         mangoQueryString = JSON.stringify(mangoQueryString)
         console.log("mangoQueryString : ", mangoQueryString);
         //let result2 = await contract.evaluateTransaction('QueryEPCIS', mangoQueryString);
