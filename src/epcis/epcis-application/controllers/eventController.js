@@ -63,9 +63,35 @@ parameters:
         - $ref: "#/components/parameters/GS1-EPCIS-Version"
         - $ref: "#/components/parameters/GS1-CBV-Version"
 */
+
+exports.blockChainTest = async (req, res) => {
+    if (typeof contract == 'undefined') {
+        await evaluateContract();
+        //await addContractListenerLocal();
+    }
+    //console.log("req.body : ", req.body);
+    //console.log('\n--> Submit Transaction: CreateAsset, creates new asset with ID(asset7), color(yellow), size(5), owner(Tom), and appraisedValue(1300) arguments');
+    //const assetID=uuidv4();
+	await contract.submitTransaction('CreateAsset', req.body.id, 'yellow', '5', 'Tom', '1300');
+	//console.log('*** Result: committed');
+    return res.status(202).json([]);
+}
+exports.blockChainHashTest = async (req, res) => {
+    if (typeof contract == 'undefined') {
+        await evaluateContract();
+        //await addContractListenerLocal();
+    }
+    //console.log('\n--> Submit Transaction: CreateAsset, creates new asset with ID(asset7),')
+	await contract.submitTransaction('CaptureEventHash', req.body.id);
+	//console.log('*** Result: committed');
+    return res.status(202).json([]);
+}
+
+
 exports.eventPost = async (req, res) => {
 
     try {
+
         res.set({
             "GS1-EPCIS-Version": "2.0",
             "GS1-CBV-Version": "2.0",
@@ -74,6 +100,7 @@ exports.eventPost = async (req, res) => {
         });
         const [queryCheck, queryCheckError] = checkQueryParameter(req.query);
         if (!queryCheck) {
+            console.log("validation error",queryCheckError);
             res.status(400).send(queryCheckError);
             return;
         }
@@ -82,6 +109,7 @@ exports.eventPost = async (req, res) => {
 
         const [valStatus, valEror] = validator.epcValidate(event);
         if (!valStatus) {
+            console.log("validation error",valEror);
             res.status(400).send(valEror);
             return;
         }
@@ -269,21 +297,21 @@ exports.eventPost = async (req, res) => {
 
 
         const args = JSON.stringify(event);
-        console.log("args : ", args)
+        //console.log("args : ", args)
 
 
         //CaptureEvent
-        console.log('\n--> Submit Transaction: capture single event');
+        //console.log('\n--> Submit Transaction: capture single event');
         const response = await contract.submitTransaction('CaptureEvent', args);
-        console.log('*** Result: committed');
+        //console.log('*** Result: committed');
 
         const resposneText = "Successfully captured one " + event.type;
         //console.log(resposneText); // Success!
         res.set({ "Location": process.env.ROOT_END_POINT + "/capture/" + event.eventID });
         res.status(202).send(resposneText);
-        if(queryConfig.SubscriptionStatus){
-            subscriptionController.onStreamSubscription(dataList);
-        }
+        //if(queryConfig.SubscriptionStatus){
+        //    subscriptionController.onStreamSubscription(dataList);
+        //}
 
     } catch (error) {
         console.log(error);

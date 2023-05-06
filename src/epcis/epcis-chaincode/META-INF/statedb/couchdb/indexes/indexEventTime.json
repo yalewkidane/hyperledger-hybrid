@@ -1,1 +1,1 @@
-{"index":{"fields":["eventTime"]},"ddoc":"indexEventTime", "name":"indexEventTime","type":"json"}
+{"index":{"fields":["eventTime"]},"ddoc":"indexEventTimeDoc", "name":"indexEventTime","type":"json"}

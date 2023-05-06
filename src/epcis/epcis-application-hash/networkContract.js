@@ -54,19 +54,8 @@ async function connectToContract() {
   await gateway.connect(ccp, {
     wallet,
     identity: userId,
-    discovery: { enabled: true, asLocalhost: true }, // using asLocalhost as this gateway is using a fabric network deployed locally
+    discovery: { enabled: true, asLocalhost: true } // using asLocalhost as this gateway is using a fabric network deployed locally
     //eventHandlerOptions: EventStrategies.NONE
-    options: {
-      // Default timeouts for different gRPC calls 
-      requestTimeout: 100000, // In milliseconds
-      proposalTimeout: 100000, // In milliseconds
-      transactionTimeout: 100000, // In milliseconds
-      eventHandlerOptions: {
-        strategy: EventStrategies.NONE,
-        endorseTimeout: 100000,
-        timeout: 100000 // In milliseconds
-      }
-    }
   });
 
   // Build a network instance based on the channel where the smart contract is deployed

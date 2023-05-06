@@ -1108,7 +1108,7 @@ exports.getQueryResult = async (req, res) => {
         }
         const queryString = await this.builedQueryString(req.query);
         queryString.docType = 'event'
-        //console.log("queryString : ", queryString)
+        console.log("queryString : ", queryString)
 
 
         //obj.$or = [
@@ -1158,7 +1158,7 @@ exports.getQueryResult = async (req, res) => {
             }
         }
         //sort._id = -1;
-        //console.log("sort : ", sort)
+        console.log("sort : ", sort)
 
         if (typeof req.query.maxEventCount !== 'undefined') {
             const countResult = await events.countDocuments(queryString);
@@ -1167,14 +1167,14 @@ exports.getQueryResult = async (req, res) => {
             }
         }
 
-        //console.log("queryString   : ", queryString)
+        console.log("queryString   : ", queryString)
 
         let mangoQueryString = {};
         mangoQueryString.selector = queryString;
-        //mangoQueryString.sort = sort;
+        mangoQueryString.sort = sort;
         //mangoQueryString.use_index = use_index;
         mangoQueryString = JSON.stringify(mangoQueryString)
-        //console.log("mangoQueryString : ", mangoQueryString);
+        console.log("mangoQueryString : ", mangoQueryString);
         //let result2 = await contract.evaluateTransaction('QueryEPCIS', mangoQueryString);
         if (typeof contract == 'undefined') {
             await evaluateContract();
@@ -1184,7 +1184,7 @@ exports.getQueryResult = async (req, res) => {
         let resultFabric = JSON.parse(resultTransction)
         if (typeof resultFabric.results !== undefined) {
             if (resultFabric.results.length > 0) {
-                //console.log(resultFabric.results.length, " events returned");
+                console.log(resultFabric.results.length, " events returned");
 
                 var result = responseObj.responseOb;
                 var contxtConstr = ["https://ref.gs1.org/standards/epcis/2.0.0/epcis-context.jsonld"];

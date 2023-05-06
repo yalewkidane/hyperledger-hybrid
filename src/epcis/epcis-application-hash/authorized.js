@@ -36,7 +36,7 @@ const queries_router = require("./routes/queries");
 const vocabularies_router = require("./routes/vocabularies");
 
 
-
+const index_router = require("./routes/index.js");
 const userController = require("./controllers/userController");
 
 let PORT =7080; //8090;
@@ -100,7 +100,6 @@ express_app.use((req, res, next) => {
   return verifyToken(req, res, next);
 });
 */
-
 express_app.use(express.json());
 
 //express_app.use("/test", test_router);
@@ -109,18 +108,19 @@ ROOT_END_POINT = process.env.ROOT_END_POINT
 express_app.use(ROOT_END_POINT, capture_router);
 //express_app.use(ROOT_END_POINT, info_router);
 express_app.use(ROOT_END_POINT, event_router);
-express_app.use(ROOT_END_POINT, eventTypes_router);
-express_app.use(ROOT_END_POINT, epcs_router);
-express_app.use(ROOT_END_POINT, bizSteps_router);
-express_app.use(ROOT_END_POINT, bizLocations_router);
-express_app.use(ROOT_END_POINT, readPoints_router);
-express_app.use(ROOT_END_POINT, dispositions_router);
-express_app.use(ROOT_END_POINT, queries_router);
+//express_app.use(ROOT_END_POINT, eventTypes_router);
+//express_app.use(ROOT_END_POINT, epcs_router);
+//express_app.use(ROOT_END_POINT, bizSteps_router);
+//express_app.use(ROOT_END_POINT, bizLocations_router);
+//express_app.use(ROOT_END_POINT, readPoints_router);
+//express_app.use(ROOT_END_POINT, dispositions_router);
+//express_app.use(ROOT_END_POINT, queries_router);
 //express_app.use(ROOT_END_POINT, nextPageToken_router);
-express_app.use(ROOT_END_POINT, vocabularies_router);
+//express_app.use(ROOT_END_POINT, vocabularies_router);
 
 
-
+express_app.use("/", index_router);
+express_app.disable('x-powered-by');
 
 //exports.getWebscoket=()=>{
 //  return wss;

@@ -4,17 +4,41 @@ require('dotenv').config({ path: "./config/.env" })
 
 const checker = require("../utils/checkUtils.js");
 const responseUtil = require("../utils/responseUtils.js");
-const epcFormatsUtil = require("../utils/epcFormatUtil.js");
-const queryUtilis = require("../utils/queryUtils.js");
+const queryUtilis = require("../utils/queryUtils.js")
 
 const { getContract } = require('../utils/networkContractUtil.js');
 
 let contract;
 let gateway;
-async function evaluateContract() {[contract, gateway] = await getContract();}
-evaluateContract() ;
 
-exports.bizLocations = async (req, res) => {
+async function evaluateContract() {
+  [contract, gateway] = await getContract();
+  // do something with contract and gateway
+}
+evaluateContract();
+
+
+exports.eventTypesOptions = async (req, res) => {
+  try {
+    res.status(200).send("Under constraction")
+
+  } catch (error) {
+    console.log(String(error))
+    responseUtil.response500(res, error);
+  }
+};
+
+exports.eventTypeResourceOptions = async (req, res) => {
+  try {
+    res.status(200).send("Under constraction")
+
+  } catch (error) {
+    console.log(String(error))
+    responseUtil.response500(res, error);
+  }
+};
+
+exports.eventTypes = async (req, res) => {
 
 
 
@@ -26,22 +50,22 @@ exports.bizLocations = async (req, res) => {
       "GS1-Extensions": ['']
     });
 
+
+
+    if (typeof contract == 'undefined') {
+      await evaluateContract();
+    }
     //console.log(req.headers) 
     const [queryCheck, queryCheckError] = checker.checkQueryParameter(req.headers)
     if (!queryCheck) {
       return responseUtil.response406(res, queryCheckError)
     }
 
-
-
     var responseLimit = 30;
     var queryString = {}
-    if (req.query.PerPage) {
-      epcsLimit = req.query.PerPage;
-    }
 
-    if (typeof contract == 'undefined') {
-      await evaluateContract();
+    if (req.query.PerPage) {
+      responseLimit = req.query.PerPage;
     }
 
     let bookmark = ''
@@ -51,11 +75,11 @@ exports.bizLocations = async (req, res) => {
       bookmark = token;
       //obj._id=parameters.NextPageToken;
     }
-    queryString.docType = 'bizLocation'
+    queryString.docType = 'eventType'
     let mangoQueryString = {};
     mangoQueryString.selector = queryString;
     //mangoQueryString.sort = sort;
-    mangoQueryString = JSON.stringify(mangoQueryString);
+    mangoQueryString = JSON.stringify(mangoQueryString)
     console.log("mangoQueryString : ", mangoQueryString);
     //let result2 = await contract.evaluateTransaction('QueryEPCIS', mangoQueryString);
 
@@ -67,44 +91,23 @@ exports.bizLocations = async (req, res) => {
       var responseType = "Collection";
       var responseMember = [];
       if (resultFabric.results.length > 0) {
-        console.log(resultFabric.results.length, " bizLocation returned");
+        console.log(resultFabric.results.length, " eventsTypes returned");
         responseContext.push("https://ref.gs1.org/standards/epcis/2.0.0/epcis-context.jsonld");
 
-        const epcFormats = ['No_Preference', 'Always_GS1_Digital_Link', 'Always_EPC_URN', 'Never_Translates'];
-        let epcFormat = 'Always_GS1_Digital_Link'
-        if (req.headers.hasOwnProperty('gs1-epc-format')) {
-          if (epcFormats.includes(req.headers['gs1-epc-format'])) {
-            epcFormat = req.headers['gs1-epc-format']
+        let conExt = {};
+        resultFabric.results.forEach(resul => {
+          const element = resul.Record;
+          if (Object.keys(element.context).length > 0) {
+            conExt = { ...conExt, ...element.context };
           }
-        }
-        console.log("epcFormat : ", epcFormat);
-        if (epcFormat == 'No_Preference') {
-          resultFabric.results.forEach(resul => {
-            const element = resul.Record;
-            if (element.voc) { responseMember.push(element.voc) }
-          });
-        }
-        if (epcFormat == 'Never_Translates') {
-          resultFabric.results.forEach(resul => {
-            const element = resul.Record;
-            if (element.voc) { responseMember.push(element.voc) }
-          });
-        }
-        if (epcFormat == 'Always_GS1_Digital_Link') {
-          resultFabric.results.forEach(resul => {
-            const element = resul.Record;
-            if (element.voc) { responseMember.push(epcFormatsUtil.getDigitalLinkFormat(element.voc)) }
-          });
-        }
-        if (epcFormat == 'Always_EPC_URN') {
-          resultFabric.results.forEach(resul => {
-            const element = resul.Record;
-            if (element.voc) { responseMember.push(epcFormatsUtil.getURNFormat(element.voc)) }
-          });
-        }
+          if (element.voc) {
+            responseMember.push(element.voc)
+          }
+        });
+        responseContext.push(conExt);
 
         const next = resultFabric.bookmark;
-        var Link = process.env.ROOT_END_POINT + "/bizLocations?perPage=" + responseLimit +
+        var Link = process.env.ROOT_END_POINT + "/eventTypes?perPage=" + responseLimit +
           "&nextPageToken=" + next;
         if (resultFabric.results.length >= responseLimit) {
           Link = Link + 'rel="next"';
@@ -120,10 +123,8 @@ exports.bizLocations = async (req, res) => {
       });
     }
 
-
-  }
-  catch (error) {
-    console.log(String(error))
+  } catch (error) {
+    console.log(error)
     responseUtil.response500(res, error);
   }
 
@@ -133,7 +134,7 @@ exports.bizLocations = async (req, res) => {
 
 
 
-exports.bizLocationsResource = async (req, res) => {
+exports.eventTypeResource = async (req, res) => {
   try {
 
     res.set({
@@ -142,11 +143,10 @@ exports.bizLocationsResource = async (req, res) => {
       "GS1-Extensions": ['']
     });
 
-    const bizLocationPar = req.params.bizLocation;
+    const eventType = req.params.eventType;
     const [queryCheck, queryCheckError] = checker.checkQueryParameter(req.headers)
     if (!queryCheck) {
       return responseUtil.response406(res, queryCheckError);
-
     }
 
     if (typeof contract == 'undefined') {
@@ -154,8 +154,8 @@ exports.bizLocationsResource = async (req, res) => {
     }
 
     var queryString = {}
-    queryString.docType = 'bizLocation';
-    queryString.voc = bizLocationPar;
+    queryString.docType = 'eventType';
+    queryString.voc = eventType;
     let mangoQueryString = {};
     mangoQueryString.selector = queryString;
     //mangoQueryString.sort = sort;
@@ -166,10 +166,20 @@ exports.bizLocationsResource = async (req, res) => {
     let resultTransction = await contract.evaluateTransaction('VocExists', mangoQueryString);
 
     let resultFabric = JSON.parse(resultTransction)
+
     if (typeof resultFabric !== 'undefined') {
       if (resultFabric.length > 0) {
+
+        if (Object.keys(resultFabric[0].Record.context).length > 0) {
+          resCont = [];
+          resCont.push("https://ref.gs1.org/standards/epcis/2.0.0/epcis-context.jsonld");
+          resCont.push(resultFabric[0].Record.context)
+        }
+        else {
+          resCont = "https://ref.gs1.org/standards/epcis/2.0.0/epcis-context.jsonld";
+        }
         return res.status(200).json({
-          "@context": "https://ref.gs1.org/standards/epcis/2.0.0/epcis-context.jsonld",
+          "@context": resCont,
           "type": "Collection",
           "member": [
             "events"
@@ -182,6 +192,8 @@ exports.bizLocationsResource = async (req, res) => {
       responseUtil.response404(res);
     }
 
+
+
   } catch (error) {
     console.log(error)
     responseUtil.response500(res, error);
@@ -191,13 +203,35 @@ exports.bizLocationsResource = async (req, res) => {
 
 
 
-exports.bizLocationsEvent = (req, res) => {
-  if (req.query.EQ_bizLocation) {
-    return responseUtil.response400(res, "EQ_bizLocation should not be included in the query parameters");
+exports.eventTypeEvent = (req, res) => {
+  //console.log(req.params);
+  if (req.query.eventType) {
+    return responseUtil.response400(res, "eventType should not be included in the query parameters");
   }
-  req.query.EQ_bizLocation = '["' + req.params.bizLocation + '"]';
+  req.query.eventType = '["' + req.params.eventType + '"]';
   queryUtilis.getQueryResult(req, res);
 
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

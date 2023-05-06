@@ -74,21 +74,32 @@ const {Contract} = require('fabric-contract-api');
 class Chaincode extends Contract {
 
 
+	async CaptureEventHash(ctx, id) {
+		//console.log(eventJSON)
+		//const exists = await this.AssetExists(ctx, id);
+		//if (exists) {
+		//	throw new Error(`The asset ${id} already exists`);
+		//}
+		const result= await ctx.stub.putState(id, Buffer.from(id));
+		//await ctx.stub.setEvent("event", Buffer.from(id));
+		return result;
+	}
+
 	// CreateAsset - create a new asset, store into chaincode state
 	async CaptureEvent(ctx, eventString) {
 		//console.log(eventJSON)
 		const event = JSON.parse(eventString);
-		const exists = await this.AssetExists(ctx, event.eventID);
-		if (exists) {
-			throw new Error(`The asset ${event.eventID} already exists`);
-		}
+		//const exists = await this.AssetExists(ctx, event.eventID);
+		//if (exists) {
+		//	throw new Error(`The asset ${event.eventID} already exists`);
+		//}
 
 		// ==== Create asset object and marshal to JSON ====
 		//ctx.stub.setEvent("event", Buffer.from(JSON.stringify(event)));
 
 		// === Save asset to state ===
 		const result= await ctx.stub.putState(event.eventID, Buffer.from(JSON.stringify(event)));
-		await ctx.stub.setEvent("event", Buffer.from(JSON.stringify(event)));
+		//await ctx.stub.setEvent("event", Buffer.from(JSON.stringify(event)));
 		return result;
 	}
 
